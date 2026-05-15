@@ -376,10 +376,10 @@
     <!-- Header -->
     <div class="header">
         <div class="header-left">
-            <div class="eye-icon">👁️</div>
+            <div class="eye-icon">&#x2B21;</div>
             <div>
-                <div class="header-title">VVeye</div>
-                <div class="header-sub">FRAUD DETECTION</div>
+                <div class="header-title">VV Command</div>
+                <div class="header-sub" id="ceo-sub">FRAUD DETECTION</div>
             </div>
         </div>
         <button class="logout-btn" onclick="vveyeLogout()">
@@ -407,6 +407,13 @@
         </div>
     </div>
 
+    <div style="display:flex;gap:6px;padding:0 16px 14px;overflow-x:auto;scrollbar-width:none;">
+        <button onclick="ceoPanelTab('fraud')" id="ctab-fraud" style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:0.5px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;">FRAUD</button>
+        <button onclick="ceoPanelTab('mood')" id="ctab-mood" style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:0.5px solid rgba(255,255,255,0.07);background:transparent;color:rgba(255,255,255,0.4);font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;">MOOD</button>
+        <button onclick="ceoPanelTab('missions')" id="ctab-missions" style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:0.5px solid rgba(255,255,255,0.07);background:transparent;color:rgba(255,255,255,0.4);font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;">MISIUNI</button>
+        <button onclick="ceoPanelTab('scout')" id="ctab-scout" style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:0.5px solid rgba(255,255,255,0.07);background:transparent;color:rgba(255,255,255,0.4);font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;">SCOUT</button>
+    </div>
+    <div id="ceo-panel-fraud">
     <!-- Filters -->
     <div class="section-title">VALIDATION FEED</div>
     <div class="filter-tabs">
@@ -425,6 +432,32 @@
     </div>
 
 </div>
+    </div><!-- /fraud panel -->
+
+<div id="ceo-panel-mood" style="display:none;padding:0 16px 32px;">
+<div class="section-title" style="margin-top:8px;">CITY PULSE - LIVE</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;">
+<div style="background:rgba(52,211,153,0.08);border:0.5px solid rgba(52,211,153,0.2);border-radius:14px;padding:16px;text-align:center;"><div id="ceo-linis" style="font-size:28px;font-weight:800;color:#34d399;">-</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">LINISTIT</div></div>
+<div style="background:rgba(255,159,10,0.08);border:0.5px solid rgba(255,159,10,0.2);border-radius:14px;padding:16px;text-align:center;"><div id="ceo-aglomerat" style="font-size:28px;font-weight:800;color:#FF9F0A;">-</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">AGLOMERAT</div></div>
+<div style="background:rgba(255,69,58,0.08);border:0.5px solid rgba(255,69,58,0.2);border-radius:14px;padding:16px;text-align:center;"><div id="ceo-haos" style="font-size:28px;font-weight:800;color:#FF453A;">-</div><div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">HAOS</div></div>
+</div>
+<div class="section-title">CELULE GEOHASH ACTIVE</div>
+<div id="ceo-cells" style="display:flex;flex-direction:column;gap:8px;"></div>
+<button onclick="loadMoodCEO()" style="width:100%;margin-top:14px;padding:14px;border-radius:12px;background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px;">REFRESH</button>
+</div>
+
+<div id="ceo-panel-missions" style="display:none;padding:0 16px 32px;">
+<div class="section-title" style="margin-top:8px;">MISIUNI ACTIVE</div>
+<div id="ceo-missions" style="display:flex;flex-direction:column;gap:8px;"></div>
+<button onclick="loadMissionsCEO()" style="width:100%;margin-top:14px;padding:14px;border-radius:12px;background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px;">REFRESH</button>
+</div>
+
+<div id="ceo-panel-scout" style="display:none;padding:0 16px 32px;">
+<div class="section-title" style="margin-top:8px;">VVSCOUT - ENTITATI DE PROTEJAT</div>
+<div id="ceo-scout" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+<button onclick="loadScoutCEO()" style="width:100%;padding:14px;border-radius:12px;background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px;">REFRESH REGULI</button>
+</div>
+
 
 <script>
 // ===== FIREBASE CONFIG =====
@@ -633,7 +666,60 @@ function showAlert(msg, type) {
     document.body.appendChild(toast);
     setTimeout(function() { toast.remove(); }, 3000);
 }
-</script>
+function ceoPanelTab(tab){
+var panels=['fraud','mood','missions','scout'];
+var labels={fraud:'FRAUD DETECTION',mood:'CITY PULSE',missions:'MISIUNI',scout:'VVSCOUT'};
+panels.forEach(function(p){
+var panel=document.getElementById('ceo-panel-'+p);
+var btn=document.getElementById('ctab-'+p);
+if(panel)panel.style.display=(p===tab)?'block':'none';
+if(btn){btn.style.background=(p===tab)?'rgba(255,255,255,0.1)':'transparent';btn.style.color=(p===tab)?'#fff':'rgba(255,255,255,0.4)';btn.style.borderColor=(p===tab)?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.07)';}
+});
+var sub=document.getElementById('ceo-sub');if(sub)sub.textContent=labels[tab]||tab.toUpperCase();
+if(tab==='mood')loadMoodCEO();if(tab==='missions')loadMissionsCEO();if(tab==='scout')loadScoutCEO();
+}
+function loadMoodCEO(){
+var lEl=document.getElementById('ceo-linis'),aEl=document.getElementById('ceo-aglomerat'),hEl=document.getElementById('ceo-haos'),cells=document.getElementById('ceo-cells');
+if(lEl)lEl.textContent='...';
+db.collection('vv_mood').limit(100).get().then(function(snap){
+var tL=0,tA=0,tH=0,html='';
+snap.docs.forEach(function(d){var data=d.data();tL+=data.linis||0;tA+=data.aglomerat||0;tH+=data.haos||0;
+var col=tL>=tA&&tL>=tH?'#34d399':tA>=tH?'#FF9F0A':'#FF453A';
+var dom=tL>=tA&&tL>=tH?'Linistit':tA>=tH?'Aglomerat':'Haos';
+html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:10px;border:0.5px solid rgba(255,255,255,0.06);">'+
+'<span style="font-size:12px;font-weight:700;letter-spacing:1px;">'+d.id.toUpperCase()+'</span>'+
+'<span style="font-size:11px;color:rgba(255,255,255,0.35);">'+(data.total||0)+' tapuri</span>'+
+'<span style="font-size:11px;color:'+col+';font-weight:700;">'+dom+'</span></div>';
+});
+if(lEl)lEl.textContent=tL;if(aEl)aEl.textContent=tA;if(hEl)hEl.textContent=tH;
+if(cells)cells.innerHTML=html||'<div style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Nicio celula activa.</div>';
+}).catch(function(){if(lEl)lEl.textContent='ERR';});
+}
+function loadMissionsCEO(){
+var el=document.getElementById('ceo-missions');if(!el)return;
+el.innerHTML='<div style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Se incarca...</div>';
+db.collection('missions').where('status','==','active').orderBy('createdAt','desc').limit(50).get()
+.then(function(snap){
+if(!snap.docs.length){el.innerHTML='<div style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Nicio misiune activa.</div>';return;}
+el.innerHTML=snap.docs.map(function(d){var m=d.data();
+return '<div style="padding:12px 14px;background:rgba(255,255,255,0.04);border-radius:10px;border:0.5px solid rgba(255,255,255,0.06);">'+
+'<div style="font-size:13px;font-weight:600;margin-bottom:3px;">'+(m.description||'fara descriere')+'</div>'+
+'<div style="font-size:11px;color:rgba(255,255,255,0.35);">'+(m.reward||0)+' VV</div></div>';}).join('');
+}).catch(function(){el.innerHTML='<div style="color:rgba(255,59,48,0.7);padding:20px;">Eroare Firestore.</div>';});
+}
+function loadScoutCEO(){
+var el=document.getElementById('ceo-scout');if(!el)return;
+el.innerHTML='<div style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Se incarca...</div>';
+db.collection('vv_static_data').doc('vvscout_config').get()
+.then(function(snap){
+if(!snap.exists||!snap.data().rules||!snap.data().rules.length){el.innerHTML='<div style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Nicio regula VVScout.</div>';return;}
+el.innerHTML=snap.data().rules.map(function(r){
+return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:10px;border:0.5px solid rgba(255,255,255,0.06);">'+
+(r.logoUrl?'<img src="'+r.logoUrl+'" style="width:28px;height:28px;border-radius:6px;object-fit:contain;" />':'<div style="width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">'+r.name[0]+'</div>')+
+'<div style="flex:1;"><div style="font-size:13px;font-weight:600;">'+r.name+'</div><div style="font-size:10px;color:rgba(255,255,255,0.3);">'+r.type+(r.domain?' · '+r.domain:'')+'</div></div>'+
+'<span style="font-size:10px;color:'+(r.active!==false?'#34d399':'rgba(255,255,255,0.25)')+';">'+(r.active!==false?'activ':'off')+'</span></div>';}).join('');
+}).catch(function(){el.innerHTML='<div style="color:rgba(255,59,48,0.7);padding:20px;">Eroare.</div>';});
+}</script>
 
 </body>
 </html>
