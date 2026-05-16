@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VVeye — Fraud Detection</title>
+    <title>VV Command · CEO</title>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -293,6 +293,19 @@
             letter-spacing: 0.5px;
         }
 
+        .btn-proof {
+            padding: 12px 16px;
+            background: rgba(10,132,255,0.15);
+            border: 1px solid rgba(10,132,255,0.3);
+            border-radius: 10px;
+            color: var(--blue);
+            font-weight: 800;
+            font-size: 12px;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
         .btn-approve:disabled,
         .btn-reject:disabled {
             opacity: 0.4;
@@ -356,17 +369,22 @@
 <!-- LOGIN -->
 <div id="login-screen">
     <div class="vveye-logo">VV TECHNOLOGIES</div>
-    <div class="vveye-title">VVeye</div>
-    <div class="vveye-sub">FRAUD DETECTION SYSTEM</div>
+    <div class="vveye-title">VV Command</div>
+    <div class="vveye-sub">CEO ACCESS</div>
+
+    <input type="email" id="vveye-email" class="login-input"
+        placeholder="email"
+        autocomplete="email"
+        style="letter-spacing:normal;margin-bottom:10px;">
 
     <input type="password" id="vveye-pass" class="login-input"
         placeholder="• • • • • • • •"
         autocomplete="current-password">
 
-    <div id="login-error">Acces refuzat. Parolă incorectă.</div>
+    <div id="login-error" style="display:none;">Acces refuzat.</div>
 
-    <button class="login-btn" onclick="vveyeLogin()">
-        <i class="fas fa-eye"></i> ACTIVEAZĂ VVeye
+    <button class="login-btn" id="vveye-btn" onclick="vveyeLogin()">
+        INTRĂ ÎN COMMAND
     </button>
 </div>
 
@@ -474,33 +492,45 @@ if (!firebase.apps.length) {
 
 var db = firebase.firestore();
 
-// ===== PAROLA ACCES =====
-var VVEYE_PASSWORD = 'CEO2026';
+// ===== FIREBASE AUTH — real, persistent =====
+var CEO_UID_CMD = 'PthU3uVY5WSPNx8d4XrdXEgszEo1';
 var currentFilter = 'all';
 var allProofs = [];
 
-function vveyeLogin() {
-    var pass = document.getElementById('vveye-pass').value;
-    var errEl = document.getElementById('login-error');
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(console.error);
 
-    if (pass === VVEYE_PASSWORD) {
+firebase.auth().onAuthStateChanged(function(user) {
+    if (user && user.uid === CEO_UID_CMD) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         loadProofs();
     } else {
-        errEl.style.display = 'block';
-        document.getElementById('vveye-pass').value = '';
-        setTimeout(function() { errEl.style.display = 'none'; }, 3000);
+        if (user) firebase.auth().signOut();
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('dashboard').style.display = 'none';
     }
+});
+
+function vveyeLogin() {
+    var email = document.getElementById('vveye-email').value.trim();
+    var pass  = document.getElementById('vveye-pass').value;
+    var btn   = document.getElementById('vveye-btn');
+    var err   = document.getElementById('login-error');
+    btn.textContent = 'SE VERIFICĂ...';
+    btn.disabled = true;
+    err.style.display = 'none';
+    firebase.auth().signInWithEmailAndPassword(email, pass).catch(function() {
+        err.textContent = 'Acces refuzat.';
+        err.style.display = 'block';
+        btn.textContent  = 'INTRĂ ÎN COMMAND';
+        btn.disabled = false;
+    });
 }
 
 function vveyeLogout() {
-    document.getElementById('dashboard').style.display = 'none';
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('vveye-pass').value = '';
+    firebase.auth().signOut();
 }
 
-// Enter pe parola
 document.getElementById('vveye-pass').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') vveyeLogin();
 });
@@ -602,6 +632,7 @@ function renderProofs() {
                 '<div class="proof-actions">' +
                     '<button class="btn-approve" ' + actionsDisabled + ' onclick="approveProof(\'' + proof._id + '\')">✓ APPROVE</button>' +
                     '<button class="btn-reject" ' + actionsDisabled + ' onclick="rejectProof(\'' + proof._id + '\', \'' + (proof.agentId || '') + '\')">✕ REJECT & BAN</button>' +
+                (proof.approved ? '<button class="btn-proof" onclick="generateProof(\'' + proof._id + '\',' + (proof.gpsLat||0) + ',' + (proof.gpsLng||0) + ')">📋 VV Proof</button>' : '') +
                 '</div>' +
             '</div>';
 
@@ -651,6 +682,49 @@ function rejectProof(photoId, agentId) {
     }).catch(function(err) {
         showAlert('Eroare: ' + err.message, 'red');
     });
+}
+
+// ===== VV PROOF — certificat anonim tamper-proof =====
+function geoHash(lat, lng, p) {
+    var BASE32 = '0123456789bcdefghjkmnpqrstuvwxyz';
+    p = p || 7;
+    var minLat=-90, maxLat=90, minLng=-180, maxLng=180;
+    var hash='', bit=0, even=true, ch=0;
+    while (hash.length < p) {
+        if (even) { var mid=(minLng+maxLng)/2; if(lng>mid){ch|=(1<<(4-bit));minLng=mid;}else{maxLng=mid;} }
+        else { var mid=(minLat+maxLat)/2; if(lat>mid){ch|=(1<<(4-bit));minLat=mid;}else{maxLat=mid;} }
+        even=!even;
+        if (++bit===5) { hash+=BASE32[ch]; ch=0; bit=0; }
+    }
+    return hash;
+}
+
+function generateProof(photoId, lat, lng) {
+    var cert = {
+        id: 'VVP-' + photoId.substring(0,8).toUpperCase(),
+        photoRef: photoId,
+        geohash: (lat && lng) ? geoHash(lat, lng, 7) : null,
+        lat: lat || null,
+        lng: lng || null,
+        issuedAt: new Date().toISOString(),
+        issuedBy: 'VV Technologies · vv-ep-beta',
+        status: 'VALID',
+        version: '1.0'
+    };
+    db.collection('vv_proofs').doc(cert.id).set(cert).catch(console.error);
+    var json = JSON.stringify(cert, null, 2);
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;';
+    modal.innerHTML = '<div style="background:#0a0a0e;border:1px solid rgba(10,132,255,0.3);border-radius:20px;padding:28px;max-width:480px;width:100%;font-family:monospace;">' +
+        '<div style="font-size:11px;letter-spacing:3px;color:#0A84FF;font-weight:800;margin-bottom:16px;">VV PROOF · CERTIFICAT ANONIM</div>' +
+        '<pre style="font-size:11px;color:rgba(255,255,255,0.8);white-space:pre-wrap;word-break:break-all;background:rgba(255,255,255,0.04);border-radius:10px;padding:16px;max-height:320px;overflow-y:auto;">' + json + '</pre>' +
+        '<div style="font-size:10px;color:rgba(255,255,255,0.4);margin:12px 0;">Verificare publică: vv-technologies.github.io/vv-team/proof.html?id=' + cert.id + '</div>' +
+        '<div style="display:flex;gap:10px;margin-top:16px;">' +
+        '<button onclick="navigator.clipboard.writeText(JSON.stringify(' + JSON.stringify(cert) + '))" style="flex:1;padding:12px;background:rgba(10,132,255,0.15);border:1px solid rgba(10,132,255,0.3);border-radius:10px;color:#0A84FF;font-weight:800;font-size:12px;cursor:pointer;">📋 COPIAZĂ JSON</button>' +
+        '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.6);font-weight:800;font-size:12px;cursor:pointer;">✕ ÎNCHIDE</button>' +
+        '</div></div>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
 }
 
 // ===== ALERT TOAST =====
